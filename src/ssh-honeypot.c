@@ -404,6 +404,7 @@ static int handle_ssh_auth (ssh_session session) {
     ssh_message_free (message);
   }
 
+  ssh_disconnect (session);
   return 0;
 }
 
@@ -470,7 +471,6 @@ int main (int argc, char *argv[]) {
   unsigned short	port = PORT, banner_index = 1;
   const char *		banner = banners[1].str;
   char *		username = NULL;
-  ssh_session		session;
   ssh_bind		sshbind;
 
 
@@ -606,7 +606,6 @@ int main (int argc, char *argv[]) {
 	     port,
 	     getpid());
 
-  session = ssh_new ();
   sshbind = ssh_bind_new ();
 
   ssh_bind_options_set (sshbind, SSH_BIND_OPTIONS_BINDADDR, bindaddr);
@@ -626,6 +625,7 @@ int main (int argc, char *argv[]) {
     drop_privileges (username);
 
   for (;;) {
+    ssh_session session = ssh_new ();
     if (ssh_bind_accept (sshbind, session) == SSH_ERROR)
       log_entry_fatal ("FATAL: ssh_bind_accept(): %s", ssh_get_error (sshbind));
 
@@ -634,11 +634,10 @@ int main (int argc, char *argv[]) {
     if (child < 0)
       log_entry_fatal ("FATAL: fork(): %s", strerror (errno));
 
-    if (child == 0) {
-      int ec = handle_ssh_auth (session);
-      ssh_disconnect (session);
-      exit (ec);
-    }
+    if (child == 0)
+      exit (handle_ssh_auth (session));
+    else
+      ssh_free (session);
   }
 
   return EXIT_SUCCESS;
