@@ -636,6 +636,8 @@ int main (int argc, char *argv[]) {
 
     if (child == 0)
       exit (handle_ssh_auth (session));
+    else
+      ssh_disconnect (session);
   }
 
   return EXIT_SUCCESS;
