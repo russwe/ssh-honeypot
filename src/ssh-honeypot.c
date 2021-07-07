@@ -634,10 +634,11 @@ int main (int argc, char *argv[]) {
     if (child < 0)
       log_entry_fatal ("FATAL: fork(): %s", strerror (errno));
 
-    if (child == 0)
-      exit (handle_ssh_auth (session));
-    else
+    if (child == 0) {
+      int ec = handle_ssh_auth (session);
       ssh_disconnect (session);
+      exit (ec);
+    }
   }
 
   return EXIT_SUCCESS;
